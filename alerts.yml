@@ -1,0 +1,44 @@
+groups:
+  - name: Critical Alerts
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        annotations:
+          title: 'Instance {{ $labels.instance }} down'
+          description: '{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute.'
+        labels:
+          severity: 'critical'
+
+  - name: HostOutOfMemory
+    rules:
+      - alert: OutOfMemory
+        expr: node_memory_MemAvailable_bytes{instance="server-host"} / node_memory_MemTotal_bytes{instance="server-host"} < 0.25
+        for: 5m
+        annotations:
+          title: 'Host out of memory (instance {{ $labels.instance }})'
+          description: 'Node memory is filling up (< 25% left) VALUE = {{ $value }}'
+        labels:
+          severity: 'warning'
+
+  - name: HostHighCpuLoad
+    rules:
+      - alert: HighCpuLoad
+        expr: avg by (instance) (rate(node_cpu_seconds_total{instance="server-host", mode!="idle"}[5m])) / avg by (instance) (rate(node_cpu_seconds_total{instance="server-host"}[5m])) > 0.8
+        for: 5m
+        annotations:
+          title: 'Host high CPU load (instance {{ $labels.instance }})'
+          description: 'CPU load is > 80% VALUE = {{ $value }}'
+        labels:
+          severity: 'warning'
+
+  - name: HostOutOfDiskSpace
+    rules:
+      - alert: OutOfDiskSpace
+        expr: (node_filesystem_avail_bytes{instance="server-host", mountpoint="/"}) / node_filesystem_size_bytes{instance="server-host", mountpoint="/"} < 0.3
+        for: 5m
+        annotations:
+          title: 'Host out of disk space (instance {{ $labels.instance }})'
+          description: 'Disk is almost full (< 70%) VALUE = {{ $value }}'
+        labels:
+          severity: 'warning'
